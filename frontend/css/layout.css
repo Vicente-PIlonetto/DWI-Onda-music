@@ -676,3 +676,8 @@ dialog[open]::backdrop { animation: fade .2s ease-out; }
   .shortcut img { width: 56px; height: 56px; }
   .shortcut-play { display: none; }
 }
+
+/* Rodapé: links secundários (contato e administração). */
+.footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+.footer-links a { color: var(--muted); font-size: 12px; }
+.footer-links a:hover { color: var(--text); text-decoration: underline; }
