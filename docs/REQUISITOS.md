@@ -33,14 +33,14 @@ Grupo 2 — Spotify: **Cauan Riffel, Giovani Pott e Vicente Pilonetto**.
 | --- | --- |
 | HTML5, CSS3 e JavaScript próprios, sem frameworks proibidos | Implementado em `frontend/` com módulos ES, sem framework de interface nem etapa de build. |
 | Elementos semânticos | `header`, `nav`, `main`, `section`, `aside` e `footer`. |
-| Pelo menos dois formulários | Login, cadastro, busca e formulários de playlist/painel. Campos têm rótulos e mensagens de validação. |
+| Pelo menos dois formulários | Login, cadastro, contato, busca e formulários de playlist/painel. Campos têm rótulos, tipos `email`/`tel`/`number`/`search`, `required`, `minlength`, `min`/`max` e `pattern` (nome e telefone), com mensagens de validação. |
 | Tabela HTML | Catálogo público e painel administrativo usam tabela semântica. |
 | Mídia com texto alternativo | Capas do catálogo recebem `alt` descritivo; o player usa `<audio>`. Revisar textos e conteúdo final. |
 | CSS externo, variáveis de cor/fonte, Grid/Flex, breakpoints, estados e transições | Implementado em `frontend/css/`; conferido no código, precisa de revisão visual no navegador e comparação com os wireframes. |
 | Validação JavaScript inline e menu mobile abrir/fechar | Implementados em `frontend/js/site.js`; erros aparecem junto aos campos e o botão de menu atualiza `aria-expanded`. |
-| Duas interações JavaScript e acessibilidade de teclado | Busca dinâmica, player, modais e formulários; foco visível e rótulos nos controles. Recomenda-se testar manualmente a ordem de foco em todos os estados. |
+| Duas interações JavaScript e acessibilidade de teclado | Busca dinâmica, conteúdo gerado a partir de JSON (`demo/catalog.json`), dados salvos no `localStorage`, alternância de tema claro/escuro, player e modais; foco visível e rótulos nos controles. Recomenda-se testar manualmente a ordem de foco em todos os estados. |
 | README com site, integrantes e instruções | Incluído neste README. |
-| GitHub Pages | `scripts/export_pages.py` produz versão estática somente de catálogo e busca. Publicação e URL ainda pendentes; não substituir por URL não conferida. |
+| GitHub Pages | `scripts/export_pages.py` produz as 13 telas com dados fictícios locais; `docker-compose.frontend.yml` executa somente o frontend e `.github/workflows/pages.yml` publica na `main` (o Pages precisa estar com origem **GitHub Actions** nas configurações). |
 
 ## Parte 3 — PHP, dados e administração
 
@@ -48,14 +48,14 @@ Grupo 2 — Spotify: **Cauan Riffel, Giovani Pott e Vicente Pilonetto**.
 | --- | --- |
 | PHP sem framework e persistência via PDO | Controllers/repositórios usam PDO e prepared statements. |
 | MySQL/MariaDB | Atendido com MariaDB/InnoDB, PDO MySQL e migrations SQL em `backend/migrations/`. |
-| Páginas PHP com includes header/menu/footer | Includes compartilhados em `backend/views/` e shell servido por `backend/public/site.php`; interface principal continua sendo SPA. A interpretação do PDF pode exigir páginas tradicionais adicionais. |
+| Páginas PHP com includes header/menu/footer | Includes compartilhados em `backend/views/`, usados pela SPA (`site.php`), pelas páginas públicas tradicionais `catalogo.php` (GET) e `contato.php` (POST) e pelo painel. |
 | Separar regras e acesso a dados | Repositórios e controllers separados dos templates. |
 | Formulários GET/POST, validação no servidor, mensagens e preservação de campos | Login administrativo e operações do painel usam POST, CSRF, validação PHP, mensagens e valores preservados; API também valida operações JSON. Rever se o professor exige esse fluxo em cada formulário. |
 | Sessão, hash de senha e logout | Sessão com cookie seguro conforme configuração, `password_hash`/`password_verify`, regeneração de sessão e logout POST. |
 | Painel protegido por redirect | `backend/public/admin/` exige role admin e redireciona visitantes para login. Usuário comum recebe bloqueio. |
 | CRUD de uma entidade e listagem pública | Painel permite criar/editar/excluir álbuns vazios; álbum criado aparece no catálogo. Exclusão de álbum com faixas é recusada. |
-| Listar registros de formulário no painel | Painel lista cadastros sem expor hashes de senha. |
-| Duas regras de negócio em PHP | Aplicadas à propriedade/duplicação de faixas em playlists e ao controle de catálogo/admin. Descrever e demonstrar no vídeo. |
+| Listar registros de formulário no painel | `/admin/messages.php` lista, filtra, marca como lida e exclui as mensagens do formulário de contato; `/admin/users.php` lista cadastros sem expor hashes de senha. |
+| Duas regras de negócio em PHP | Faixa não se repete na playlist e só o dono a altera; álbum com faixas não pode ser excluído; no máximo 3 mensagens de contato por email em 24 horas. Descrever e demonstrar no vídeo. |
 | Script SQL de criação | Migrations numeradas em `backend/migrations/` compatíveis com MariaDB. |
 | Credencial de teste do painel | A senha é criada no `.env` local. Enviar acesso demonstrativo ao professor por canal privado se exigido; nunca adicionar a senha ao Git. |
 
