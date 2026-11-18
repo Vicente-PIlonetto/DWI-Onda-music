@@ -1,6 +1,6 @@
 import { api, all, user } from "../api.js";
-import { escape, time, toast } from "../ui.js";
-import { playTracks } from "../player.js";
+import { escape, time, toast, replay } from "../ui.js";
+import { playTracks, markNowPlaying } from "../player.js";
 export async function trackList(container, tracks, playlistId = null) {
   let likes = new Set();
   if (user) likes = new Set((await all("/likes")).map((x) => String(x.id)));
@@ -9,10 +9,11 @@ export async function trackList(container, tracks, playlistId = null) {
       tracks
         .map(
           (t, i) =>
-            `<div class="track-row"><button class="track-index" data-play="${i}" aria-label="Reproduzir ${escape(t.title)}">${i + 1}</button><div><button class="track-name" data-play="${i}">${escape(t.title)}</button><small><a href="#/artists/${t.artist_id}">${escape(t.artist_name)}</a></small></div><a class="album-col" href="#/albums/${t.album_id}">${escape(t.album_title)}</a><span class="muted">${time(t.duration_seconds)}</span><button data-like="${t.id}" class="${likes.has(String(t.id)) ? "liked" : ""}" aria-label="Curtir ${escape(t.title)}" aria-pressed="${likes.has(String(t.id))}">${likes.has(String(t.id)) ? "♥" : "♡"}</button><button data-add="${t.id}" aria-label="${playlistId ? "Remover da" : "Adicionar à"} playlist">${playlistId ? "−" : "＋"}</button></div>`,
+            `<div class="track-row" data-track-id="${t.id}"><button class="track-index" data-play="${i}" aria-label="Reproduzir ${escape(t.title)}"><span class="num">${i + 1}</span><span class="row-play" aria-hidden="true">▶</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button><div><button class="track-name" data-play="${i}">${escape(t.title)}</button><small><a href="#/artists/${t.artist_id}">${escape(t.artist_name)}</a></small></div><a class="album-col" href="#/albums/${t.album_id}">${escape(t.album_title)}</a><span class="muted">${time(t.duration_seconds)}</span><button data-like="${t.id}" class="${likes.has(String(t.id)) ? "liked" : ""}" aria-label="Curtir ${escape(t.title)}" aria-pressed="${likes.has(String(t.id))}">${likes.has(String(t.id)) ? "♥" : "♡"}</button><button data-add="${t.id}" aria-label="${playlistId ? "Remover da" : "Adicionar à"} playlist">${playlistId ? "−" : "＋"}</button></div>`,
         )
         .join("")
-    : '<p class="empty">Ainda não há faixas por aqui. Explore os álbuns e monte sua seleção.</p>';
+    : '<p class="empty">Nenhuma faixa por aqui ainda.</p>';
+  markNowPlaying();
   container.onclick = async (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
@@ -33,6 +34,7 @@ export async function trackList(container, tracks, playlistId = null) {
         else likes.add(id);
         btn.classList.toggle("liked", likes.has(id));
         btn.textContent = likes.has(id) ? "♥" : "♡";
+        if (likes.has(id)) replay(btn, "pop");
         btn.setAttribute("aria-pressed", String(likes.has(id)));
       }
       if (btn.dataset.add) {

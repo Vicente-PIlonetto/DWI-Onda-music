@@ -1,15 +1,38 @@
 import { api, all, user } from "../api.js";
-import { cards } from "../ui.js";
+import { cards, cover, escape, toast } from "../ui.js";
 import { playTracks } from "../player.js";
+// Saudação conforme a hora, como na tela inicial do player original.
+function greeting() {
+  const hour = new Date().getHours();
+  return hour < 5 ? "Boa noite" : hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+}
+// Atalhos: blocos horizontais com capa pequena (curtidas, playlists e álbuns).
+function shortcuts(items) {
+  return `<div class="shortcuts">${items
+    .map(
+      (x) => `<div class="shortcut"><a href="${x.href}"><img src="${x.cover}" alt="" loading="lazy"><span>${escape(x.title)}</span></a>${x.play ? `<button class="shortcut-play" data-play="${escape(x.play)}" aria-label="Reproduzir ${escape(x.title)}">▶</button>` : ""}</div>`,
+    )
+    .join("")}</div>`;
+}
 export async function home(el) {
   const albums = await api("/albums?limit=8");
   const playlists = user ? await api("/playlists?limit=4") : { items: [] };
-  el.innerHTML = `<section class="hero"><div class="hero-copy"><div class="eyebrow">DESCOBERTA DA SEMANA / VOL. 01</div><h1>Entre no seu<br>próprio ritmo.</h1><p>Novas frequências, novas possibilidades.<br>Um espaço para o som que combina com você.</p><button class="primary" id="hero-play">▶ &nbsp; Explorar os sons</button></div><div class="hero-art" aria-hidden="true"></div></section><div class="section-heading"><h2>Uma nova frequência</h2><a href="#/catalog">Ver todos os álbuns ↗</a></div>${cards(albums.items)}${playlists.items.length ? `<div class="section-heading"><h2>Suas playlists</h2><a href="#/library">Ver biblioteca ↗</a></div>${cards(playlists.items, "playlists")}` : ""}<div class="section-heading"><h2>Seu próximo encontro</h2><a href="#/search">Explorar catálogo ↗</a></div><p class="muted">Cinco artistas fictícios. Oito universos sonoros. Descubra nossa coleção de demonstração.</p>`;
-  el.querySelector("#hero-play").onclick = async () => {
+  const quick = [
+    ...(user ? [{ href: "#/likes", title: "Músicas Curtidas", cover: cover(null, { id: 3, title: "Curtidas" }), play: "/likes" }] : []),
+    ...playlists.items.map((p) => ({ href: "#/playlists/" + p.id, title: p.name, cover: cover(p.cover_path, p), play: "/playlists/" + p.id })),
+    ...albums.items.map((a) => ({ href: "#/albums/" + a.id, title: a.title, cover: cover(a.cover_path, a), play: "/albums/" + a.id })),
+  ].slice(0, 8);
+  el.innerHTML = `<h1 class="greeting">${greeting()}</h1>${shortcuts(quick)}
+    <div class="section-heading"><h2>Álbuns</h2><a href="#/catalog">Mostrar tudo</a></div>${cards(albums.items)}
+    ${playlists.items.length ? `<div class="section-heading"><h2>Suas playlists</h2><a href="#/library">Mostrar tudo</a></div>${cards(playlists.items, "playlists")}` : ""}`;
+  el.querySelector(".shortcuts").onclick = async (event) => {
+    const button = event.target.closest("[data-play]");
+    if (!button) return;
     try {
-      playTracks(await all("/tracks"));
+      const path = button.dataset.play;
+      playTracks(await all(path, path === "/likes" ? undefined : "tracks"));
     } catch {
-      location.hash = "/login";
+      toast("Entre para ouvir");
     }
   };
 }
@@ -19,7 +42,7 @@ export async function library(el) {
     return;
   }
   const playlists = await all("/playlists");
-  el.innerHTML = `<div class="eyebrow">FEITO POR VOCÊ</div><h1>Sua biblioteca.</h1><p class="muted">Cada playlist, um momento.</p><button class="primary" id="new-list">＋ Criar playlist</button><div class="section-heading"><h2>Suas seleções</h2></div>${playlists.length ? cards(playlists, "playlists") : '<p class="empty">Sua primeira playlist está esperando por você.</p>'}`;
+  el.innerHTML = `<h1>Sua Biblioteca</h1><button class="primary" id="new-list">＋ Criar playlist</button><div class="section-heading"><h2>Playlists</h2></div>${playlists.length ? cards(playlists, "playlists") : '<p class="empty">Você ainda não criou playlists.</p>'}`;
   el.querySelector("#new-list").onclick = () =>
     document.querySelector("#create-playlist").click();
 }

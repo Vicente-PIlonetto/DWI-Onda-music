@@ -3,7 +3,7 @@ import { trackList } from "./tracks.js";
 import { escape, cards } from "../ui.js";
 export async function search(el) {
   el.innerHTML =
-    '<div class="eyebrow">ENCONTRE SUA FREQUÊNCIA</div><h1>O que toca você?</h1><label for="query" class="muted">Busque uma faixa, artista ou álbum</label><p></p><input id="query" class="search-input" type="search" placeholder="⌕  Comece por um nome…" maxlength="160" autocomplete="off"><div id="results" aria-live="polite"></div>';
+    '<h1>Buscar</h1><label for="query" class="visually-hidden">Buscar faixa, artista ou álbum</label><input id="query" class="search-input" type="search" placeholder="⌕  O que você quer ouvir?" maxlength="160" autocomplete="off"><div id="results" aria-live="polite"></div>';
   const input = el.querySelector("#query"),
     results = el.querySelector("#results");
   // Sem texto digitado, mostra os álbuns para navegar (como a tela "Navegar por todos").

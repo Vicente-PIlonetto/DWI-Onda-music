@@ -15,9 +15,8 @@ export async function contact(el) {
     .map(([value, label]) => `<option value="${value}">${escape(label)}</option>`)
     .join("");
   el.innerHTML = `<section class="auth">
-    <div class="eyebrow">FALE COM A ONDA</div>
     <h1>Contato</h1>
-    <p class="muted">Dúvidas, sugestões de faixas ou quer publicar suas músicas? Use apenas dados fictícios.</p>
+    <p class="muted">Dúvidas, sugestões ou pedidos de artistas. Use apenas dados fictícios.</p>
     <p class="success" role="status"></p><p class="error" role="alert"></p>
     <form class="admin-form contact-form" novalidate>
       <label>Nome<input name="name" autocomplete="name" required maxlength="160" pattern="[A-Za-zÀ-ÖØ-öø-ÿ' ]{2,160}" data-pattern-message="Use apenas letras e espaços."></label>

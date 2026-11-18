@@ -5,7 +5,7 @@
   --muted: #b8b8b8;
   --accent: #add8e6;
   --button-bg: #ffffff;
-  --button-hover: #add8e6;
+  --button-hover: var(--accent);
   --line: #ffffff12;
   --text: #ffffff;
   --on-button: #080808;
@@ -13,7 +13,7 @@
   --surface-2: #202020;
   --hover: #ffffff09;
   --error: #ffb5ad;
-  --success: #add8e6;
+  --success: var(--accent);
   --font-family: Inter, Arial, Helvetica, sans-serif;
   font-family: var(--font-family);
 }
@@ -25,7 +25,7 @@
   --muted: #4a5560;
   --accent: #1d6a85;
   --button-bg: #0b1d26;
-  --button-hover: #1d6a85;
+  --button-hover: var(--accent);
   --line: #0b1d261a;
   --text: #0b1d26;
   --on-button: #ffffff;
@@ -33,16 +33,7 @@
   --surface-2: #e6edf1;
   --hover: #0b1d260a;
   --error: #b42318;
-  --success: #1d6a85;
-}
-.theme-toggle {
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 6px 12px;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-.theme-toggle:hover {
-  background: var(--surface-2);
+  --success: var(--accent);
 }
 * {
   box-sizing: border-box;
@@ -226,15 +217,12 @@ small,
   padding: 12px;
   border: 1px solid transparent;
   border-radius: 10px;
-  background: var(--panel);
-  transition:
-    background 0.2s,
-    transform 0.2s;
+  background: transparent;
+  transition: background 0.3s;
   min-width: 0;
 }
 .card:hover {
   background: var(--surface-2);
-  transform: translateY(-3px);
 }
 .cover-wrap {
   position: relative;
@@ -271,15 +259,6 @@ small,
 .card:focus-visible .card-play {
   opacity: 1;
   transform: translateY(0);
-}
-.card:nth-child(4n + 2) .cover {
-  filter: brightness(0.85);
-}
-.card:nth-child(4n + 3) .cover {
-  filter: saturate(0.45);
-}
-.card:nth-child(4n + 4) .cover {
-  filter: brightness(1.12);
 }
 .card h3 {
   font-size: 15px;

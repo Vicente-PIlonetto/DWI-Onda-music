@@ -14,7 +14,7 @@ Grupo 2 — Spotify (Onda). Duração-alvo: **9min30** (o enunciado pede de 8 a 
 
 ## Antes de gravar
 
-- [ ] **Usar só dados fictícios.** O banco local tem o álbum real *Acústico MTV – Engenheiros do Hawaii*, importado de arquivos locais. Remova esse álbum ou recrie o banco (`docker compose down -v && docker compose up -d --build`) antes de gravar.
+- [ ] **Álbum pessoal:** o banco local tem o *Acústico MTV – Engenheiros do Hawaii*, ripado de um CD comprado, para uso pessoal (o Onda vai virar um servidor de música self-hosted). Para o vídeo e para qualquer instalação pública, use só o catálogo fictício: grave a partir de um banco limpo (`docker compose -p onda-video ...`) ou evite abrir esse álbum na tela.
 - [ ] Subir a stack (`docker compose up -d`) e abrir http://localhost:8088. Ter em mãos as contas do `.env` (`SEED_ADMIN_*` e `SEED_USER_*`).
 - [ ] Enviar 1 ou 2 mensagens de teste pelo `/contato.php`, para o painel não aparecer vazio.
 - [ ] Deixar abertos: o Spotify (site original), o Draw.io com o mapa e os wireframes, o VS Code e o DevTools no modo celular (iPhone 12/13, 390 px).
@@ -85,7 +85,8 @@ Grupo 2 — Spotify (Onda). Duração-alvo: **9min30** (o enunciado pede de 8 a 
 
 ## 8:30 – 9:30 · Vicente: melhorias finais e encerramento
 
-- Clicar em ☀ Claro / ☾ Escuro: a escolha é salva no `localStorage`. Código em `frontend/js/site.js:4` e `frontend/css/app.css:21` (`:root[data-theme="light"]`, que redefine as mesmas variáveis).
+- Abrir **⚙ Configurações** no menu: trocar o tema (Escuro, Claro ou Sistema) e as animações; tudo muda na hora e fica salvo no `localStorage`. Código em `frontend/js/prefs.js` (aplica as escolhas no `<head>`, antes de a página aparecer, para não piscar), `frontend/js/views/settings.js` (a tela) e `frontend/css/app.css` (`:root[data-theme="light"]` redefine as mesmas variáveis).
+- **Animações no estilo do Spotify:** abrir um álbum (o topo ganha um degradê com a cor da capa, calculada num `canvas` em `dominantColor`, `frontend/js/ui.js`); passar o mouse num card (o fundo clareia e o botão ▶ sobe), numa faixa (o número vira ▶) e na barra de progresso; curtir uma faixa (o coração pula); tocar (a capa e o título do player entram com fade, a faixa atual fica azul com equalizador); abrir a fila (desliza da direita). Em Configurações → Animações → Desligadas tudo fica parado. CSS no fim de `frontend/css/layout.css`.
 - Capas geradas: cada álbum recebe uma capa SVG própria, criada a partir do id. Código em `frontend/js/ui.js:18`.
 - **Media Session:** com uma faixa tocando, usar as teclas de mídia do teclado (ou a central de mídia do sistema) para pausar e avançar; o título e a capa aparecem fora do navegador. Código em `frontend/js/player.js`, função `updateMediaSession` (`navigator.mediaSession.metadata` e `setActionHandler`).
 - Abrir `#/nao-existe` para mostrar a página 404.
@@ -106,4 +107,5 @@ Grupo 2 — Spotify (Onda). Duração-alvo: **9min30** (o enunciado pede de 8 a 
 | Giovani | Como funciona a paginação? | `catalogo.php`: `count(*)` dá o total, `ceil(total/6)` as páginas, e `OFFSET (pagina-1)*6`; página inválida volta para a 1 e acima do total vai para a última |
 | Giovani | Diferença entre GET e POST aqui? | GET para consulta, sem efeito colateral (`catalogo.php`); POST para gravar (`contato.php`, painel) |
 | Vicente | Onde a regra de negócio é validada? | No PHP, independentemente do JS: `ContactRepository::validate`, `AdminRepository::delete` e `PlaylistRepository` |
-| Vicente | Como o tema funciona sem recarregar? | `data-theme` no `<html>` troca as variáveis CSS; a escolha fica no `localStorage` |
+| Vicente | Como o tema funciona sem recarregar? | `prefs.js` coloca `data-theme` e `data-motion` no `<html>`, e o CSS troca as variáveis; a escolha fica no `localStorage` |
+| Vicente | E quem tem sensibilidade a movimento? | A opção "Automático" respeita `prefers-reduced-motion`; "Desligadas" zera `animation` e `transition` |

@@ -1,5 +1,5 @@
 import { user, isDemo } from "./api.js";
-import { cover, escape, time, toast } from "./ui.js";
+import { cover, escape, time, toast, replay } from "./ui.js";
 const audio = document.querySelector("#audio");
 let queue = [],
   index = -1,
@@ -25,7 +25,7 @@ const $ = (s) => document.querySelector(s);
 export function playTracks(tracks, start = 0) {
   if (!user) {
     location.hash = "/login";
-    toast("Entre para ouvir sua seleção");
+    toast("Entre para ouvir");
     return;
   }
   queue = [...tracks];
@@ -39,9 +39,10 @@ export function stop() {
   if (demoAudioUrl) { URL.revokeObjectURL(demoAudioUrl); demoAudioUrl = null; }
   queue = [];
   index = -1;
-  $("#now-title").textContent = "Escolha sua próxima onda";
-  $("#now-artist").textContent = "Seu som começa aqui";
+  $("#now-title").textContent = "Nada tocando";
+  $("#now-artist").textContent = "";
   renderQueue();
+  markNowPlaying();
 }
 function load() {
   const track = queue[index];
@@ -52,6 +53,7 @@ function load() {
   $("#now-title").textContent = track.title;
   $("#now-artist").textContent = track.artist_name;
   $("#now-cover").src = cover(track.cover_path, { id: track.album_id, title: track.album_title });
+  replay(document.querySelector(".now"), "swap");
   updateMediaSession(track);
   audio
     .play()
@@ -59,6 +61,19 @@ function load() {
       toast("Não foi possível tocar. Confira sua sessão e o arquivo de áudio."),
     );
   renderQueue();
+  markNowPlaying();
+}
+// Destaca na lista de faixas a música atual (o CSS mostra o equalizador enquanto toca).
+export function markNowPlaying() {
+  const id = String(queue[index]?.id ?? "");
+  document.querySelectorAll(".track-row[data-track-id]").forEach((row) =>
+    row.classList.toggle("current", row.dataset.trackId === id),
+  );
+}
+// Preenchimento das barras (progresso e volume): o CSS usa --pct no gradiente do fundo.
+function fill(input) {
+  const max = Number(input.max) || 1;
+  input.style.setProperty("--pct", (Number(input.value) / max) * 100 + "%");
 }
 // Media Session API: mostra a faixa e os controles na tela de bloqueio do
 // celular, na central de mídia do sistema e nas teclas de mídia do teclado.
@@ -153,15 +168,32 @@ $("#repeat").onclick = () => {
 $("#seek").oninput = (e) => {
   if (Number.isFinite(audio.duration))
     audio.currentTime = Number(e.target.value);
+  fill(e.target);
 };
 for (const selector of ["#volume", "#queue-volume"]) {
   $(selector).oninput = (e) => {
     audio.volume = Number(e.target.value);
     $("#volume").value = e.target.value;
     $("#queue-volume").value = e.target.value;
+    fill($("#volume"));
+    fill($("#queue-volume"));
   };
 }
-audio.volume = 0.65;
+// Volume: começa em 65% ou, se a preferência "Lembrar o volume" estiver ligada, no último usado.
+function setVolume(value) {
+  audio.volume = value;
+  $("#volume").value = String(value);
+  $("#queue-volume").value = String(value);
+  fill($("#volume"));
+  fill($("#queue-volume"));
+}
+let savedVolume = NaN;
+try { savedVolume = parseFloat(localStorage.getItem("onda-volume")); } catch { /* sem armazenamento */ }
+setVolume(window.OndaPrefs?.get().rememberVolume && savedVolume >= 0 && savedVolume <= 1 ? savedVolume : 0.65);
+audio.addEventListener("volumechange", () => {
+  if (!window.OndaPrefs?.get().rememberVolume) return;
+  try { localStorage.setItem("onda-volume", String(audio.volume)); } catch { /* ignora */ }
+});
 for (const event of [
   "timeupdate",
   "loadedmetadata",
@@ -172,6 +204,7 @@ for (const event of [
     const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
     $("#seek").max = String(duration || 100);
     $("#seek").value = String(audio.currentTime || 0);
+    fill($("#seek"));
     $("#current").textContent = time(audio.currentTime);
     $("#duration").textContent = time(duration);
   });
@@ -182,6 +215,8 @@ for (const event of ["play", "pause", "ended"])
       "aria-label",
       audio.paused ? "Reproduzir" : "Pausar",
     );
+    document.body.classList.toggle("is-playing", !audio.paused);
+    replay($("#play"), "pop");
     if ("mediaSession" in navigator)
       navigator.mediaSession.playbackState = audio.paused ? "paused" : "playing";
   });

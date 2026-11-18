@@ -6,7 +6,7 @@ function data() {
   if (!state) {
     try { state = JSON.parse(localStorage.getItem(key)) || {}; } catch { state = {}; }
     state.users ||= [{ id: 1, name: "Pessoa de demonstração", email: "demo@onda.test", role: "user" }, { id: 2, name: "Admin de demonstração", email: "admin@onda.test", role: "admin" }];
-    state.playlists ||= [{ id: 1, owner_id: 1, name: "Minha primeira onda", track_ids: [1, 2] }];
+    state.playlists ||= [{ id: 1, owner_id: 1, name: "Minha playlist", track_ids: [1, 2] }];
     state.likes ||= [1];
   }
   return state;

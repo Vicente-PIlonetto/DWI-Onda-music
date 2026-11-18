@@ -1,31 +1,6 @@
 // Comportamento compartilhado entre a SPA e o painel renderizado pelo PHP.
 
-// Tema claro/escuro: a escolha fica salva no localStorage deste navegador.
-const THEME_KEY = 'onda-theme';
-function readTheme() {
-  try { return localStorage.getItem(THEME_KEY); } catch { return null; }
-}
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  const button = document.querySelector('#theme-toggle');
-  if (button) {
-    const light = theme === 'light';
-    button.innerHTML = light ? '☾<span class="theme-label"> Escuro</span>' : '☀<span class="theme-label"> Claro</span>';
-    button.setAttribute('aria-label', light ? 'Ativar tema escuro' : 'Ativar tema claro');
-    button.setAttribute('aria-pressed', String(light));
-  }
-}
-const themeButton = document.createElement('button');
-themeButton.id = 'theme-toggle';
-themeButton.type = 'button';
-themeButton.className = 'theme-toggle';
-document.querySelector('.topbar')?.append(themeButton);
-applyTheme(readTheme() === 'light' ? 'light' : 'dark');
-themeButton.addEventListener('click', () => {
-  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-  applyTheme(next);
-  try { localStorage.setItem(THEME_KEY, next); } catch { /* armazenamento indisponível */ }
-});
+// O tema e as demais preferências são aplicados por prefs.js e alterados em #/settings.
 
 const toggle = document.querySelector('#menu-toggle');
 const navigation = document.querySelector('#navigation');
