@@ -1,11 +1,18 @@
 import { api } from "../api.js";
 import { trackList } from "./tracks.js";
-import { escape } from "../ui.js";
+import { escape, cards } from "../ui.js";
 export async function search(el) {
   el.innerHTML =
-    '<div class="eyebrow">ENCONTRE SUA FREQUÊNCIA</div><h1>O que toca você?</h1><label for="query" class="muted">Busque uma faixa, artista ou álbum</label><p></p><input id="query" class="search-input" type="search" placeholder="⌕  Comece por um nome…" maxlength="160" autocomplete="off"><div id="results" aria-live="polite"><p class="empty">Experimente “Aurora”, “Mar Aberto” ou “Horizonte”.</p></div>';
+    '<div class="eyebrow">ENCONTRE SUA FREQUÊNCIA</div><h1>O que toca você?</h1><label for="query" class="muted">Busque uma faixa, artista ou álbum</label><p></p><input id="query" class="search-input" type="search" placeholder="⌕  Comece por um nome…" maxlength="160" autocomplete="off"><div id="results" aria-live="polite"></div>';
   const input = el.querySelector("#query"),
     results = el.querySelector("#results");
+  // Sem texto digitado, mostra os álbuns para navegar (como a tela "Navegar por todos").
+  let browse = '<p class="empty">Experimente “Aurora”, “Mar Aberto” ou “Horizonte”.</p>';
+  try {
+    const albums = await api("/albums?limit=8");
+    browse += `<div class="section-heading"><h2>Navegar por todos</h2><a href="#/catalog">Ver catálogo ↗</a></div>${cards(albums.items)}`;
+  } catch { /* a busca continua funcionando sem a vitrine */ }
+  el.querySelector("#results").innerHTML = browse;
   let timer,
     revision = 0,
     controller;
@@ -15,8 +22,7 @@ export async function search(el) {
     controller = new AbortController();
     const q = input.value.trim();
     if (!q) {
-      results.innerHTML =
-        '<p class="empty">Um nome é o começo de uma descoberta.</p>';
+      results.innerHTML = browse;
       return;
     }
     results.innerHTML = '<p class="empty">Buscando…</p>';

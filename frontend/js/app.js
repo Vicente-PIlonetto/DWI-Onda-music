@@ -28,7 +28,7 @@ async function refreshLibrary() {
   try {
     const lists = user ? await all("/playlists") : [];
     $("#sidebar-playlists").innerHTML = lists
-      .map((p) => `<a class="playlist-link" href="#/playlists/${p.id}"><img class="playlist-thumb" src="${cover(p.cover_path)}" alt=""> <span>${escape(p.name)}</span></a>`)
+      .map((p) => `<a class="playlist-link" href="#/playlists/${p.id}"><img class="playlist-thumb" src="${cover(p.cover_path, p)}" alt=""> <span>${escape(p.name)}</span></a>`)
       .join("");
     return lists;
   } catch (e) {

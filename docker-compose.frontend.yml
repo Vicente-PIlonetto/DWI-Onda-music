@@ -1,0 +1,11 @@
+# Parte 2: somente o frontend estático (mesma saída publicada no GitHub Pages), sem PHP nem banco.
+# Uso: docker compose -f docker-compose.frontend.yml up -d --build  →  http://localhost:8089
+name: onda-music-frontend
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8089}:80"
+    restart: unless-stopped

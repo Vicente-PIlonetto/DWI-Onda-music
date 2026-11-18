@@ -18,10 +18,16 @@ export async function route() {
     if (path === "/") await home(el);
     else if (path === "/catalog") { const { catalog } = await import("./views/catalog.js"); await catalog(el); }
     else if (path === "/library") await library(el);
+    else if (path === "/contact") {
+      // No site com PHP o contato é uma página tradicional (/contato.php).
+      if (!isDemo) { location.href = "/contato.php"; return; }
+      const { contact } = await import("./views/contact.js");
+      await contact(el);
+    }
     else if (path === "/likes") await collection(el, "likes");
-    else if (isDemo && (path === "/admin" || path === "/admin/users")) {
+    else if (isDemo && ["/admin", "/admin/users", "/admin/messages"].includes(path)) {
       const { admin } = await import("./views/admin.js");
-      await admin(el, path.endsWith("/users"));
+      await admin(el, path.split("/")[2] || "albums");
     }
     else if (match) await collection(el, match[1], match[2]);
     else if (path === "/login" || path === "/register") {
@@ -31,8 +37,12 @@ export async function route() {
       const { search } = await import("./views/search.js");
       await search(el);
     } else
-      el.innerHTML =
-        '<h1>Página não encontrada.</h1><a href="#/">Voltar ao início</a>';
+      el.innerHTML = `<section class="not-found" aria-labelledby="not-found-title">
+        <p class="not-found-code" aria-hidden="true">404</p>
+        <h1 id="not-found-title">Essa onda não chegou aqui.</h1>
+        <p class="muted">O endereço <code>${escape(path)}</code> não existe no Onda.</p>
+        <div class="not-found-actions"><a class="primary" href="#/">Voltar ao início</a><a class="pill" href="#/search">Buscar músicas</a></div>
+      </section>`;
   } catch (error) {
     if (version === revision)
       el.innerHTML = `<h1>Ops, uma pausa.</h1><p class="error">${escape(error.message)}</p><a class="pill" href="#/">Voltar ao início</a>`;

@@ -17,3 +17,9 @@ backups/
 dump*.sql
 *.sqlite
 __pycache__/
+EDH-Ac.zip
+
+# Materiais locais que não fazem parte do site
+entrega-contribuintes/
+data.zip
+Trabalho III*.pdf

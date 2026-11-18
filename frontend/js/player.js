@@ -51,13 +51,37 @@ function load() {
   audio.src = demoAudioUrl || "/api/stream/" + track.id;
   $("#now-title").textContent = track.title;
   $("#now-artist").textContent = track.artist_name;
-  $("#now-cover").src = cover(track.cover_path);
+  $("#now-cover").src = cover(track.cover_path, { id: track.album_id, title: track.album_title });
+  updateMediaSession(track);
   audio
     .play()
     .catch(() =>
       toast("Não foi possível tocar. Confira sua sessão e o arquivo de áudio."),
     );
   renderQueue();
+}
+// Media Session API: mostra a faixa e os controles na tela de bloqueio do
+// celular, na central de mídia do sistema e nas teclas de mídia do teclado.
+function updateMediaSession(track) {
+  if (!("mediaSession" in navigator)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: track.title,
+    artist: track.artist_name,
+    album: track.album_title || "",
+    artwork: [{ src: $("#now-cover").src, sizes: "300x300" }],
+  });
+}
+if ("mediaSession" in navigator) {
+  const actions = {
+    play: () => audio.play().catch(() => {}),
+    pause: () => audio.pause(),
+    previoustrack: () => move(-1),
+    nexttrack: () => move(1),
+    seekto: (details) => { audio.currentTime = details.seekTime; },
+  };
+  for (const [action, handler] of Object.entries(actions)) {
+    try { navigator.mediaSession.setActionHandler(action, handler); } catch { /* ação não suportada neste navegador */ }
+  }
 }
 function move(step, ended = false) {
   if (!queue.length) return;
@@ -158,6 +182,8 @@ for (const event of ["play", "pause", "ended"])
       "aria-label",
       audio.paused ? "Reproduzir" : "Pausar",
     );
+    if ("mediaSession" in navigator)
+      navigator.mediaSession.playbackState = audio.paused ? "paused" : "playing";
   });
 audio.addEventListener("ended", () => move(1, true));
 audio.addEventListener("error", () => {

@@ -85,6 +85,26 @@ export async function demoApi(path, options = {}) {
   if (url.pathname === "/likes" && method === "GET") { needUser(); return page(tracks.filter(t => state.likes.includes(t.id)), url); }
   match = url.pathname.match(/^\/likes\/(\d+)$/);
   if (match) { needUser(); const id = Number(match[1]); if (method === "POST" && !state.likes.includes(id)) state.likes.push(id); if (method === "DELETE") state.likes = state.likes.filter(x => x !== id); save(); return {}; }
+  if (url.pathname === "/contact" && method === "POST") {
+    // Mesmas regras do PHP: campos válidos e no máximo 3 mensagens por email em 24 horas.
+    const name = String(body.name || "").trim(), email = String(body.email || "").trim().toLowerCase(), text = String(body.message || "").trim();
+    if (!/^[\p{L}' ]{2,160}$/u.test(name)) fail("Use apenas letras e espaços no nome.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail("Informe um email válido.");
+    if (text.length < 10 || text.length > 2000) fail("A mensagem deve ter de 10 a 2000 caracteres.");
+    if (body.consent !== "1") fail("Confirme que os dados enviados são fictícios.");
+    state.messages ||= [];
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    if (state.messages.filter(m => m.email === email && m.created_at > dayAgo).length >= 3) fail("Este email já enviou 3 mensagens nas últimas 24 horas. Tente amanhã.");
+    const item = { id: Date.now(), name, email, phone: String(body.phone || "").trim(), subject: String(body.subject || "outro"), message: text, read: false, created_at: Date.now() };
+    state.messages.push(item); save(); return item;
+  }
+  if (url.pathname === "/admin/messages" && method === "GET") { needAdmin(); return [...(state.messages || [])].reverse(); }
+  match = url.pathname.match(/^\/admin\/messages\/(\d+)$/);
+  if (match) {
+    needAdmin(); const item = (state.messages || []).find(x => x.id === Number(match[1])) || fail("Mensagem não encontrada.");
+    if (method === "PUT") { item.read = !item.read; save(); return item; }
+    if (method === "DELETE") { state.messages = state.messages.filter(x => x.id !== item.id); save(); return {}; }
+  }
   if (url.pathname === "/admin/users" && method === "GET") { needAdmin(); return state.users; }
   if (url.pathname === "/admin/albums" && method === "GET") { needAdmin(); return albums; }
   if (url.pathname === "/admin/albums" && method === "POST") {
