@@ -8,18 +8,25 @@ export const escape = (value) =>
   );
 export const time = (seconds) =>
   `${Math.floor((Number(seconds) || 0) / 60)}:${String(Math.floor((Number(seconds) || 0) % 60)).padStart(2, "0")}`;
-// Pares de cores da identidade (preto, branco e azul) usados nas capas geradas.
-const COVER_COLORS = [
-  ["#0b1d26", "#add8e6"], ["#080808", "#3a6f86"], ["#12324a", "#e8f4f8"], ["#1d6a85", "#080808"],
-  ["#202020", "#add8e6"], ["#0e3b4f", "#7fb8cc"], ["#162028", "#c9e6ef"], ["#05141c", "#5aa3bf"],
-];
-// Gera uma capa SVG única para cada item a partir do id (sem imagens externas).
+// Caminho SVG de uma senoide (y = meio − amplitude·sen(2πx/período + fase)).
+function sinePath(width, mid, amp, period, phase, step = 8) {
+  let d = "";
+  for (let x = 0; x <= width; x += step)
+    d += (x ? "L" : "M") + x + " " + (mid - amp * Math.sin((2 * Math.PI * x) / period + phase)).toFixed(1);
+  return d;
+}
+// Gera uma capa SVG única para cada item a partir do id: fundo em degradê e camadas de ondas.
 function generatedCover(seed) {
   const id = Number(seed.id) || 0;
-  const [dark, light] = COVER_COLORS[id % COVER_COLORS.length];
-  const cx = 60 + ((id * 37) % 180), cy = 60 + ((id * 53) % 180);
-  const rings = Array.from({ length: 7 }, (_, i) => `<circle cx="${cx}" cy="${cy}" r="${18 + i * 22}" fill="none" stroke="${light}" stroke-opacity="${0.5 - i * 0.06}" stroke-width="1.5"/>`).join("");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${dark}"/><stop offset="1" stop-color="${light}" stop-opacity=".55"/></linearGradient></defs><rect width="300" height="300" fill="${dark}"/><rect width="300" height="300" fill="url(#g)"/>${rings}<circle cx="${cx}" cy="${cy}" r="7" fill="${light}"/></svg>`;
+  let state = (id * 2654435761) % 4294967296 || 1;
+  const random = () => ((state = (state * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  const hue = (id * 47 + 190) % 360;
+  const period = 160 + random() * 180, amp = 14 + random() * 26, phase = random() * 6.28, tilt = random() * 0.8 - 0.4;
+  const waves = Array.from({ length: 9 }, (_, i) =>
+    `<path d="${sinePath(300, 70 + i * 22 + i * i * tilt, amp * (0.5 + i * 0.12), period, phase + i * 0.35)}" stroke-opacity="${(0.12 + i * 0.09).toFixed(2)}"/>`,
+  ).join("");
+  const hill = sinePath(300, 236, amp * 0.9, period * 1.3, phase + 1.2);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue} 45% 12%)"/><stop offset="1" stop-color="hsl(${(hue + 40) % 360} 55% 30%)"/></linearGradient></defs><rect width="300" height="300" fill="url(#b)"/><g fill="none" stroke="hsl(${(hue + 20) % 360} 85% 80%)" stroke-width="2" stroke-linecap="round">${waves}</g><path d="${hill} L300 300 L0 300Z" fill="hsl(${(hue + 20) % 360} 80% 75%)" fill-opacity=".14"/></svg>`;
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
 // seed (opcional): item com id e título; sem capa enviada, gera uma capa própria.
