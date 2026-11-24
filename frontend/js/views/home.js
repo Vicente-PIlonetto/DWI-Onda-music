@@ -1,4 +1,5 @@
-import { api, all, user } from "../api.js";
+import { api, all, user, isDemo } from "../api.js";
+import { trackList } from "./tracks.js";
 import { cards, cover, escape, toast } from "../ui.js";
 import { playTracks } from "../player.js";
 // Saudação conforme a hora, como na tela inicial do player original.
@@ -22,9 +23,17 @@ export async function home(el) {
     ...playlists.items.map((p) => ({ href: "#/playlists/" + p.id, title: p.name, cover: cover(p.cover_path, p), play: "/playlists/" + p.id })),
     ...albums.items.map((a) => ({ href: "#/albums/" + a.id, title: a.title, cover: cover(a.cover_path, a), play: "/albums/" + a.id })),
   ].slice(0, 8);
-  el.innerHTML = `<h1 class="greeting">${greeting()}</h1>${shortcuts(quick)}
+  const recent = user && !isDemo ? (await api("/history?limit=6").catch(() => ({ items: [] }))).items : [];
+  el.innerHTML = `<div class="greeting-row"><h1 class="greeting">${greeting()}</h1><button class="pill" id="shuffle-all">⤮ Tocar aleatório</button></div>${shortcuts(quick)}
+    ${recent.length ? '<div class="section-heading"><h2>Tocadas recentemente</h2><a href="#/settings">Gerenciar</a></div><div class="track-list" id="recent"></div>' : ""}
     <div class="section-heading"><h2>Álbuns</h2><a href="#/catalog">Mostrar tudo</a></div>${cards(albums.items)}
     ${playlists.items.length ? `<div class="section-heading"><h2>Suas playlists</h2><a href="#/library">Mostrar tudo</a></div>${cards(playlists.items, "playlists")}` : ""}`;
+  if (recent.length) await trackList(el.querySelector("#recent"), recent);
+  el.querySelector("#shuffle-all").onclick = async () => {
+    if (!user) { location.hash = "/login"; toast("Entre para ouvir"); return; }
+    try { playTracks((await api("/tracks/random?limit=50")).items); }
+    catch (error) { toast(error.message); }
+  };
   el.querySelector(".shortcuts").onclick = async (event) => {
     const button = event.target.closest("[data-play]");
     if (!button) return;

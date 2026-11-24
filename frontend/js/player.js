@@ -1,4 +1,4 @@
-import { user, isDemo } from "./api.js";
+import { api, user, isDemo } from "./api.js";
 import { cover, escape, time, toast, replay } from "./ui.js";
 const audio = document.querySelector("#audio");
 let queue = [],
@@ -6,6 +6,17 @@ let queue = [],
   shuffle = false,
   repeat = 0;
 let demoAudioUrl;
+// Conta como "tocada" depois de 10 s (ou metade, em faixas curtas); uma vez por carregamento.
+let recorded = true;
+audio.addEventListener("timeupdate", () => {
+  const track = queue[index];
+  if (recorded || !track || isDemo || !user) return;
+  if (audio.currentTime < Math.min(10, (audio.duration || 20) / 2)) return;
+  recorded = true;
+  api("/history", { method: "POST", body: { track_id: track.id } })
+    .then(() => document.dispatchEvent(new Event("history-changed")))
+    .catch(() => {});
+});
 function demoTone(id) {
   const rate = 8000, seconds = 5, count = rate * seconds;
   const buffer = new ArrayBuffer(44 + count * 2), view = new DataView(buffer);
@@ -39,29 +50,71 @@ export function stop() {
   if (demoAudioUrl) { URL.revokeObjectURL(demoAudioUrl); demoAudioUrl = null; }
   queue = [];
   index = -1;
+  try { localStorage.removeItem(STATE_KEY); } catch { /* ignora */ }
   $("#now-title").textContent = "Nada tocando";
   $("#now-artist").textContent = "";
   renderQueue();
   markNowPlaying();
 }
-function load() {
+// options.start: posição inicial (s); options.autoplay = false só prepara a faixa.
+function load(options = {}) {
+  const { start = 0, autoplay = true, quiet = false } = options;
   const track = queue[index];
   if (!track) return;
   if (demoAudioUrl) URL.revokeObjectURL(demoAudioUrl);
   demoAudioUrl = isDemo ? demoTone(track.id) : null;
   audio.src = demoAudioUrl || "/api/stream/" + track.id;
+  recorded = false;
+  if (start > 0)
+    audio.addEventListener("loadedmetadata", () => { audio.currentTime = Math.min(start, (audio.duration || start + 1) - 1); }, { once: true });
   $("#now-title").textContent = track.title;
   $("#now-artist").textContent = track.artist_name;
   $("#now-cover").src = cover(track.cover_path, { id: track.album_id, title: track.album_title });
   replay(document.querySelector(".now"), "swap");
   updateMediaSession(track);
-  audio
-    .play()
-    .catch(() =>
-      toast("Não foi possível tocar. Confira sua sessão e o arquivo de áudio."),
-    );
+  if (autoplay)
+    audio
+      .play()
+      .catch((error) => {
+        // Ao retomar depois de recarregar, o navegador pode exigir um clique antes de tocar.
+        if (quiet || error.name === "NotAllowedError") toast("Toque ▶ para continuar de onde parou");
+        else toast("Não foi possível tocar. Confira sua sessão e o arquivo de áudio.");
+      });
   renderQueue();
   markNowPlaying();
+  saveState(true);
+}
+// ---- Retomar: fila, faixa e posição ficam no localStorage (por usuário). ----
+const STATE_KEY = "onda-player";
+let savedAt = 0;
+const slim = (t) => ({ id: t.id, title: t.title, artist_name: t.artist_name, artist_id: t.artist_id, album_id: t.album_id, album_title: t.album_title, cover_path: t.cover_path, duration_seconds: t.duration_seconds });
+function saveState(force = false) {
+  if (!user || index < 0 || !queue.length) return;
+  const now = Date.now();
+  if (!force && now - savedAt < 3000) return;
+  savedAt = now;
+  try {
+    localStorage.setItem(STATE_KEY, JSON.stringify({
+      user: user.id, queue: queue.slice(0, 1000).map(slim), index, time: audio.currentTime || 0,
+      playing: !audio.paused, shuffle, repeat, at: now,
+    }));
+  } catch { /* armazenamento cheio ou bloqueado */ }
+}
+audio.addEventListener("timeupdate", () => saveState());
+for (const event of ["pause", "play"]) audio.addEventListener(event, () => saveState(true));
+window.addEventListener("pagehide", () => saveState(true));
+/** Chamado depois de carregar a sessão: volta à faixa e ao ponto em que estava. */
+export function restorePlayer() {
+  if (!user || queue.length) return;
+  let state;
+  try { state = JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch { return; }
+  if (!state || state.user !== user.id || !Array.isArray(state.queue) || !state.queue.length) return;
+  queue = state.queue;
+  index = Math.min(Math.max(0, Number(state.index) || 0), queue.length - 1);
+  setShuffle(Boolean(state.shuffle));
+  setRepeat(Number(state.repeat) || 0);
+  // Continua tocando se a página foi recarregada no meio da música (ex.: ir ao contato e voltar).
+  load({ start: Number(state.time) || 0, autoplay: Boolean(state.playing) && Date.now() - state.at < 30000, quiet: true });
 }
 // Destaca na lista de faixas a música atual (o CSS mostra o equalizador enquanto toca).
 export function markNowPlaying() {
@@ -152,19 +205,21 @@ $("#previous").onclick = () => {
   else move(-1);
 };
 $("#next").onclick = () => move(1);
-$("#shuffle").onclick = () => {
-  shuffle = !shuffle;
+function setShuffle(value) {
+  shuffle = value;
   $("#shuffle").setAttribute("aria-pressed", String(shuffle));
-};
-$("#repeat").onclick = () => {
-  repeat = (repeat + 1) % 3;
+}
+$("#shuffle").onclick = () => { setShuffle(!shuffle); saveState(true); };
+$("#repeat").onclick = () => { setRepeat((repeat + 1) % 3); saveState(true); };
+function setRepeat(value) {
+  repeat = value;
   $("#repeat").classList.toggle("enabled", repeat > 0);
   $("#repeat").textContent = repeat === 2 ? "↻¹" : "↻";
   $("#repeat").setAttribute(
     "aria-label",
     "Repetição: " + ["desligada", "fila", "faixa"][repeat],
   );
-};
+}
 $("#seek").oninput = (e) => {
   if (Number.isFinite(audio.duration))
     audio.currentTime = Number(e.target.value);
@@ -231,3 +286,32 @@ function toggleQueue(show) {
 }
 $("#queue-toggle").onclick = () => toggleQueue($("#queue").hidden);
 $("#queue-close").onclick = () => toggleQueue(false);
+
+// ---- Atalhos de teclado (fora de campos de texto) ----
+// Espaço/K: tocar/pausar · ←/→: 5 s · Shift+←/→ ou P/N: faixa anterior/próxima · M: mudo · /: buscar
+let volumeBeforeMute = 0.65;
+document.addEventListener("keydown", (e) => {
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+  const target = e.target;
+  if (target.closest?.("input, textarea, select, [contenteditable=true], dialog[open]")) return;
+  const onControl = target.closest?.("button, a, summary");
+  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  const actions = {
+    " ": () => $("#play").click(),
+    k: () => $("#play").click(),
+    ArrowLeft: () => (e.shiftKey ? $("#previous").click() : (audio.currentTime = Math.max(0, audio.currentTime - 5))),
+    ArrowRight: () => (e.shiftKey ? move(1) : Number.isFinite(audio.duration) && (audio.currentTime = Math.min(audio.duration, audio.currentTime + 5))),
+    p: () => $("#previous").click(),
+    n: () => move(1),
+    m: () => {
+      if (audio.volume > 0) { volumeBeforeMute = audio.volume; setVolume(0); }
+      else setVolume(volumeBeforeMute || 0.65);
+      toast(audio.volume > 0 ? "Som ligado" : "Mudo");
+    },
+    "/": () => { location.hash = "/search"; },
+  };
+  if (!actions[key] || (key === " " && onControl)) return;
+  if (!audio.src && key !== "/") return;
+  e.preventDefault();
+  actions[key]();
+});

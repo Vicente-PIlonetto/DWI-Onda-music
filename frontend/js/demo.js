@@ -55,6 +55,7 @@ export async function demoApi(path, options = {}) {
     state.users.push(user); state.currentUserId = user.id; save(); return { user };
   }
   if (url.pathname === "/tracks" && method === "GET") return page(tracks, url);
+  if (url.pathname === "/tracks/random" && method === "GET") return { items: [...tracks].sort(() => Math.random() - 0.5).slice(0, 50) };
   if (url.pathname === "/albums" && method === "GET") return page(albums, url);
   if (url.pathname === "/artists" && method === "GET") return page(catalog.artists, url);
   if (url.pathname === "/search" && method === "GET") {

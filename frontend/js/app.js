@@ -1,6 +1,6 @@
 import { api, all, session, user, isDemo } from "./api.js";
 import { route } from "./router.js";
-import { stop } from "./player.js";
+import { stop, restorePlayer } from "./player.js";
 import { escape, toast } from "./ui.js";
 import { cover } from "./ui.js";
 const $ = (s) => document.querySelector(s);
@@ -92,6 +92,7 @@ document.addEventListener("library-changed", refreshLibrary);
 try {
   await session();
   await refreshLibrary();
+  restorePlayer();
 } catch (e) {
   toast(e.message);
 }

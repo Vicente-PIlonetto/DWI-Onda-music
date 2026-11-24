@@ -135,6 +135,21 @@ erDiagram
 
 As migrations SQL usam MariaDB/InnoDB. As chaves estrangeiras removem relações dependentes em cascata; faixas impedem excluir um álbum ocupado. Índices atendem relações e busca textual; listagens usam cursor. O áudio passa pelo Nginx via `X-Accel-Redirect`, com suporte a HTTP Range.
 
+## API complementar
+
+Além do catálogo, playlists e curtidas, a API JSON tem:
+
+| Rota | O que faz |
+| --- | --- |
+| `PUT /api/me` · `PUT /api/me/password` · `DELETE /api/me` | Conta do próprio usuário: nome, troca de senha (pede a atual e renova a sessão) e exclusão (pede a senha). |
+| `GET/POST/DELETE /api/history` | "Tocadas recentemente": o player registra a faixa após 10 s; guarda as últimas 500 por usuário. Tabela `play_history` (`005_play_history.sql`). |
+| `PUT /api/playlists/{id}/tracks` | Reordena a playlist (`{"track_ids":[...]}` com todas as faixas). Na tela, arraste as linhas ou use Alt + ↑/↓. |
+| `GET /api/tracks/random` | Faixas sorteadas para o botão "Tocar aleatório". |
+| `GET /api/search?q=` | Na primeira página também traz `artists` e `albums`. |
+| `GET /api/health` | Estado do banco e do áudio, usado pelo healthcheck do Docker. |
+
+O login tem "Manter conectado por 30 dias". O player guarda a fila e a posição no navegador: ao recarregar, ou ao voltar de `/catalogo.php` e `/contato.php` (páginas PHP fora da SPA), ele continua de onde parou. Atalhos: Espaço/K toca e pausa, ←/→ avançam 5 s, Shift+←/→ trocam de faixa, M deixa mudo, / abre a busca.
+
 ## Validar
 
 Com Docker em execução:
@@ -145,6 +160,7 @@ python3 tests/admin.py
 python3 tests/importer.py
 python3 tests/playlist_cover.py
 python3 tests/contact.py
+python3 tests/account_history.py
 python3 scripts/check_repository.py
 ```
 

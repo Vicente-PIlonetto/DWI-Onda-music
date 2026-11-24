@@ -73,5 +73,5 @@ export function toast(message) {
   timer = setTimeout(() => (el.textContent = ""), 4500);
 }
 export function cards(items, type = "albums") {
-  return `<div class="cards">${items.map((x) => `<a class="card" href="#/${type}/${x.id}"><span class="cover-wrap"><img class="cover" src="${cover(x.cover_path, x)}" alt="Capa de ${escape(x.title || x.name)}" loading="lazy"><span class="card-play" aria-hidden="true">▶</span></span><div class="tag">${type === "albums" ? "Álbum · " + escape(x.year || "Independente") : "Sua seleção"}</div><h3>${escape(x.title || x.name)}</h3><p>${escape(x.artist_name || "Feita por você")}</p></a>`).join("")}</div>`;
+  return `<div class="cards">${items.map((x) => `<a class="card" href="#/${type}/${x.id}"><span class="cover-wrap"><img class="cover" src="${cover(x.cover_path, x)}" alt="Capa de ${escape(x.title || x.name)}" loading="lazy"><span class="card-play" aria-hidden="true">▶</span></span><div class="tag">${type === "albums" ? "Álbum · " + escape(x.year || "Independente") : type === "artists" ? "Artista" : "Sua seleção"}</div><h3>${escape(x.title || x.name)}</h3><p>${type === "artists" ? "" : escape(x.artist_name || "Feita por você")}</p></a>`).join("")}</div>`;
 }

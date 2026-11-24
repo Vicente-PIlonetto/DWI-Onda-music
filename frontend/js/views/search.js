@@ -27,7 +27,8 @@ export async function search(el) {
     }
     results.innerHTML = '<p class="empty">Buscando…</p>';
     let tracks = [],
-      cursor = null;
+      cursor = null,
+      extras = "";
     async function load() {
       try {
         const page = await api(
@@ -39,11 +40,15 @@ export async function search(el) {
         );
         if (version !== revision || !el.isConnected) return;
         tracks.push(...page.items);
+        if (!cursor) extras =
+          (page.artists?.length ? `<div class="section-heading"><h2>Artistas</h2></div>${cards(page.artists, "artists")}` : "") +
+          (page.albums?.length ? `<div class="section-heading"><h2>Álbuns</h2></div>${cards(page.albums)}` : "");
         cursor = page.next_cursor;
         const wrapper = document.createElement("div");
         await trackList(wrapper, tracks);
         if (version !== revision) return;
-        results.replaceChildren(wrapper);
+        results.innerHTML = extras + (extras && tracks.length ? '<div class="section-heading"><h2>Músicas</h2></div>' : "");
+        if (tracks.length || !extras) results.append(wrapper);
         if (cursor) {
           const more = document.createElement("button");
           more.textContent = "Carregar mais";
