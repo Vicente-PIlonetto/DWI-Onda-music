@@ -20,7 +20,7 @@ export async function auth(el, register) {
       await session();
       document.dispatchEvent(new Event("library-changed"));
       location.hash = "/";
-      toast("Conta criada");
+      toast(register ? "Conta criada" : "Bem-vindo de volta");
     } catch (error) {
       el.querySelector(".error").textContent = error.message;
     } finally {
