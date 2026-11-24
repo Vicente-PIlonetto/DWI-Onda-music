@@ -472,7 +472,9 @@ th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--line); 
 th { color: var(--muted); }
 .admin-form { display: grid; gap: 16px; max-width: 600px; }
 .admin-form label { display: grid; gap: 8px; }
+.admin-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .admin-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.admin-actions p { margin: 0; }
 .success { color: var(--accent); }
 .field-error { display: block; color: var(--error); font-size: 13px; margin-top: 6px; }
 .demo-notice { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 18px; padding: 7px 14px; border: 1px solid var(--line); border-radius: 20px; font-size: 12px; color: var(--muted); }
@@ -505,6 +507,16 @@ th { color: var(--muted); }
 
 .admin .sidebar { bottom: 0; }
 .admin .workspace { padding-bottom: 50px; }
+/* Painel: mesmo menu do site, com selo e páginas com cartões. */
+.admin-badge { align-self: flex-start; margin-top: 14px; padding: 4px 10px; border: 1px solid var(--accent); border-radius: 20px; color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+.admin main h2 { margin-top: 36px; }
+.admin .table-wrap { padding: 4px 18px 8px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.admin tbody tr:last-child td { border-bottom: 0; }
+.admin tbody tr:hover { background: var(--hover); }
+.admin-form { padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+input[type=file] { padding: 8px; }
+input[type=file]::file-selector-button { margin-right: 14px; padding: 8px 16px; border: 0; border-radius: 20px; background: var(--button-bg); color: var(--on-button); font: inherit; font-weight: 700; cursor: pointer; }
+input[type=file]::file-selector-button:hover { background: var(--button-hover); }
 
 /* Contato e páginas públicas renderizadas em PHP */
 .public .workspace { padding-bottom: 50px; }
