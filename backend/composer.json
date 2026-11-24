@@ -1,0 +1,7 @@
+{
+  "name": "onda/music-mock",
+  "description": "Importador de áudio do projeto acadêmico Onda",
+  "type": "project",
+  "require": {"php": ">=8.2", "ext-pdo": "*", "ext-pdo_mysql": "*", "james-heinrich/getid3": "^1.9"},
+  "config": {"sort-packages": true, "allow-plugins": false}
+}

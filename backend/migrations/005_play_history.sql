@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS play_history (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ user_id BIGINT UNSIGNED NOT NULL,
+ track_id BIGINT UNSIGNED NOT NULL,
+ played_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ KEY play_history_user_played (user_id, played_at),
+ CONSTRAINT play_history_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+ CONSTRAINT play_history_track_fk FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

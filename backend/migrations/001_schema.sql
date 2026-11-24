@@ -1,0 +1,64 @@
+CREATE TABLE users (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(160) NOT NULL,
+ email VARCHAR(254) NOT NULL UNIQUE,
+ password_hash VARCHAR(255) NOT NULL,
+ role ENUM('user','admin') NOT NULL DEFAULT 'user',
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE artists (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(190) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE albums (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ artist_id BIGINT UNSIGNED NOT NULL,
+ title VARCHAR(255) NOT NULL,
+ year SMALLINT UNSIGNED NULL,
+ cover_path VARCHAR(255) NULL,
+ UNIQUE KEY albums_artist_title_unique (artist_id,title),
+ CONSTRAINT albums_artist_fk FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE tracks (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ album_id BIGINT UNSIGNED NOT NULL,
+ artist_id BIGINT UNSIGNED NOT NULL,
+ title VARCHAR(255) NOT NULL,
+ track_number INT UNSIGNED NOT NULL DEFAULT 1 CHECK (track_number > 0),
+ duration_seconds DECIMAL(10,3) UNSIGNED NOT NULL DEFAULT 0 CHECK (duration_seconds >= 0),
+ audio_path VARCHAR(255) NOT NULL UNIQUE,
+ license VARCHAR(255) NOT NULL,
+ status ENUM('ready','pending') NOT NULL DEFAULT 'ready',
+ CONSTRAINT tracks_album_fk FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE,
+ CONSTRAINT tracks_artist_fk FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE playlists (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ user_id BIGINT UNSIGNED NOT NULL,
+ name VARCHAR(160) NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ cover_path VARCHAR(255) NULL,
+ CONSTRAINT playlists_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE playlist_tracks (
+ playlist_id BIGINT UNSIGNED NOT NULL,
+ track_id BIGINT UNSIGNED NOT NULL,
+ position INT UNSIGNED NOT NULL,
+ PRIMARY KEY (playlist_id,track_id),
+ UNIQUE KEY playlist_position_unique (playlist_id,position),
+ CONSTRAINT playlist_tracks_playlist_fk FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+ CONSTRAINT playlist_tracks_track_fk FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE liked_tracks (
+ user_id BIGINT UNSIGNED NOT NULL,
+ track_id BIGINT UNSIGNED NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ PRIMARY KEY (user_id,track_id),
+ CONSTRAINT liked_tracks_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+ CONSTRAINT liked_tracks_track_fk FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE login_attempts (
+ bucket CHAR(64) NOT NULL PRIMARY KEY,
+ attempts INT UNSIGNED NOT NULL,
+ expires_at DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
