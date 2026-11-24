@@ -1,8 +1,49 @@
-# Onda Music
+<p align="center">
+  <img src="docs/img/banner.png" alt="Onda: player de música com a tela de um álbum no desktop e a tela inicial no celular" width="100%">
+</p>
+
+<h1 align="center">Onda Music</h1>
+
+<p align="center">
+  <a href="https://vicente-pilonetto.github.io/DWI-Onda-music/"><b>Demonstração estática</b></a> ·
+  <a href="#rodar-localmente"><b>Rodar com Docker</b></a> ·
+  <a href="#telas"><b>Telas</b></a> ·
+  <a href="#parte-3-páginas-php"><b>Páginas PHP</b></a> ·
+  <a href="#painel-administrativo"><b>Painel</b></a>
+</p>
+
+<p align="center">
+  <img alt="PHP 8.2" src="https://img.shields.io/badge/PHP-8.2-0b1d26?style=flat-square&logo=php&logoColor=add8e6">
+  <img alt="MariaDB 11.4" src="https://img.shields.io/badge/MariaDB-11.4-0b1d26?style=flat-square&logo=mariadb&logoColor=add8e6">
+  <img alt="JavaScript sem framework" src="https://img.shields.io/badge/JavaScript-sem%20framework-0b1d26?style=flat-square&logo=javascript&logoColor=add8e6">
+  <img alt="Docker Compose" src="https://img.shields.io/badge/Docker-Compose-0b1d26?style=flat-square&logo=docker&logoColor=add8e6">
+</p>
 
 Projeto de Desenvolvimento Web I do Grupo 2: **Cauan Riffel, Giovani Pott e Vicente Pilonetto**. Onda é um mock educacional de streaming inspirado no Spotify, sem vínculo com a empresa. O catálogo de exemplo usa artistas fictícios e tons curtos gerados para o projeto.
 
 **Parte 2 (frontend estático):** [GitHub Pages](https://vicente-pilonetto.github.io/DWI-Onda-music/). **Parte 3 (PHP + MariaDB):** hospedagem prevista em `onda.papotorto.com.br` (ainda não publicada); até lá, rode localmente com Docker conforme abaixo.
+
+## Telas
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/inicio.png" alt="Tela inicial com atalhos e álbuns"><br><sub><b>Início:</b> atalhos, álbuns e tocar aleatório.</sub></td>
+    <td width="50%"><img src="docs/img/tocando.png" alt="Página de álbum com uma faixa tocando"><br><sub><b>Álbum:</b> faixa tocando, curtir e adicionar à playlist.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/busca.png" alt="Busca com a vitrine de categorias"><br><sub><b>Busca:</b> faixas, artistas e álbuns.</sub></td>
+    <td><img src="docs/img/catalogo.png" alt="Catálogo público renderizado em PHP"><br><sub><b>Catálogo (PHP, GET):</b> busca, filtro por ano e paginação.</sub></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/img/mobile-inicio.png" alt="Tela inicial no celular" width="30%">
+  &nbsp;
+  <img src="docs/img/mobile-album.png" alt="Página de álbum no celular" width="30%">
+  &nbsp;
+  <img src="docs/img/contato.png" alt="Formulário de contato em PHP" width="36%">
+</p>
+<p align="center"><sub>No celular o menu vira gaveta e o player fica fixo embaixo. À direita, o contato em PHP (POST).</sub></p>
 
 ## Casos de uso
 
@@ -10,7 +51,7 @@ Projeto de Desenvolvimento Web I do Grupo 2: **Cauan Riffel, Giovani Pott e Vice
 | --- | --- |
 | Visitante | Navegar pelo catálogo, artistas e álbuns; buscar músicas; enviar mensagem pelo formulário de contato; criar conta ou entrar. |
 | Usuário autenticado | Reproduzir faixas, criar e organizar playlists, curtir músicas. |
-| Administrador | Entrar no painel, cadastrar/editar álbuns, remover álbuns sem faixas, ler/marcar/excluir mensagens de contato e consultar registros de usuários. |
+| Administrador | Entrar no painel, cadastrar/editar álbuns, remover álbuns sem faixas, enviar e excluir faixas de áudio, ler/marcar/excluir mensagens de contato e consultar registros de usuários. |
 
 Regras principais: só o dono acessa e altera suas playlists; uma faixa não se repete na mesma playlist; a reprodução exige sessão; somente administradores alteram o catálogo; um álbum com faixas não pode ser excluído pelo painel; cada email envia no máximo 3 mensagens de contato a cada 24 horas. Todas são validadas no PHP, independentemente do JavaScript.
 
@@ -29,6 +70,7 @@ flowchart TD
   Usuário --> Curtidas
   Login -->|administrador| Painel
   Painel --> ÁlbunsCRUD
+  Painel --> Faixas
   Painel --> Mensagens
   Painel --> Registros
   Painel --> Catálogo
@@ -77,10 +119,20 @@ Para encerrar, use `docker compose down`. Os dados ficam nos volumes; `docker co
 | `/catalogo.php` | Listagem pública dinâmica dos álbuns cadastrados no painel, com busca, filtro por ano e paginação (`?pagina=`) via **GET**. |
 | `/contato.php` | Formulário **POST** com validação no servidor, sanitização (`filter_var`, `htmlspecialchars`), CSRF, mensagens de sucesso/erro e dados mantidos em caso de erro. Grava em `contact_messages`. |
 | `/admin/` | CRUD de álbuns (login com `$_SESSION`, `password_hash`/`password_verify`, redirecionamento com `header` sem login). |
+| `/admin/tracks.php` | Envio de faixas (`multipart/form-data`): MP3, OGG ou M4A de até 20 MB, licença obrigatória, tags ID3 e duração lidas com getID3. Excluir uma faixa remove o arquivo enviado e o álbum/artista que ficarem vazios. |
 | `/admin/messages.php` | Registros do formulário de contato: listar, filtrar não lidas, marcar como lida e excluir. |
 | `/admin/users.php` | Cadastros recebidos pelo formulário de criação de conta. |
 
 Cabeçalho, menu e rodapé ficam em `backend/views/` (`header.php`, `menu.php`, `footer.php`) e são incluídos com `require` pela SPA, pelas páginas públicas e pelo painel. O acesso a dados e as regras de negócio ficam em `backend/src/Repositories/` e `backend/src/Controllers/`, separados do HTML. O script SQL de criação está em `backend/migrations/` (`001_schema.sql` e seguintes).
+
+### Painel administrativo
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/admin-albuns.png" alt="Painel: resumo e cadastro de álbuns"><br><sub><b>Álbuns:</b> resumo com contagens e CRUD.</sub></td>
+    <td width="50%"><img src="docs/img/admin-faixas.png" alt="Painel: envio de faixas"><br><sub><b>Faixas:</b> envio de áudio com licença.</sub></td>
+  </tr>
+</table>
 
 **Usuário de teste do painel:** criado pelo seed com `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` do `.env`. Informe o email e a senha de teste no envio da Parte 3 pelo Classroom (não versionar a senha).
 
@@ -113,6 +165,8 @@ cp /caminho/faixa.mp3 storage/audio/
 docker compose exec php-fpm php scripts/import_tracks.php \
   --dir=/app/storage/audio --csv=/app/data/meu_catalogo.csv
 ```
+
+Também é possível enviar uma faixa pelo painel, em **Faixas**: o arquivo vai para `storage/audio/uploads/` (fora do Git) com nome derivado do conteúdo, e a licença é obrigatória.
 
 Use um CSV com as colunas de `data/catalog.csv`. Metadados preenchidos no CSV têm prioridade sobre tags lidas com getID3. O importador é idempotente. Para baixar origens HTTPS autorizadas, use `sh scripts/download_audio.sh` e revise os créditos com `python3 scripts/attributions.py`.
 
@@ -157,6 +211,7 @@ Com Docker em execução:
 ```sh
 python3 tests/integration.py
 python3 tests/admin.py
+python3 tests/admin_tracks.py
 python3 tests/importer.py
 python3 tests/playlist_cover.py
 python3 tests/contact.py
